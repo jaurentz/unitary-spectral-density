@@ -4,9 +4,14 @@ function [rho,info]=usd_poisson_density(U,theta,s,r,seed,tol,restart,maxit,opts)
 %   z=r*exp(1i*theta), 0<r<1. Only the Anymatrix operator action
 %   U(x,'notransp') and U([],'size') are required.
 %
-%   The legacy 8-positional-argument call defaults to MATLAB GMRES.
-%   Ninth argument OPTS selects experimental projected alternatives:
-%       OPTS.solver = 'gmres' (default) or 'sketch'
+%   The legacy 8-argument call now defaults to 'auto': dense BACKSLASH
+%   for n <= direct_threshold (128) and GMRES for larger operators.
+%   The operator is explicitly assembled by n basis-vector matvecs
+%   for the direct path (O(n^2) storage), then shifted systems for
+%   all probes are solved together by MATLAB backslash at each angle.
+%   Ninth argument OPTS selects algorithms and experimental options:
+%       OPTS.solver = 'auto' (default), 'backslash', 'gmres', 'sketch'
+%       OPTS.direct_threshold = 128 (only used for 'auto')
 %       OPTS.sketch_order = Krylov subspace dimension (default min(n,32))
 %       OPTS.sketch_dimension = projection rows (default 2*order)
 %       OPTS.sketch_type = 'gaussian' (default) or 'countsketch'
@@ -41,11 +46,20 @@ if nargin<8 || isempty(maxit)
         maxit=ceil(n/restart)+5;
     end
 end
-if ~isfield(opts,'solver'),opts.solver='gmres';end
+if ~isfield(opts,'solver') || isempty(opts.solver),opts.solver='auto';end
+if ~isfield(opts,'direct_threshold') || isempty(opts.direct_threshold)
+    opts.direct_threshold=128;
+end
+validateattributes(opts.direct_threshold,{'numeric'}, ...
+    {'scalar','integer','positive','finite'});
 solver=lower(char(opts.solver));
 if strcmp(solver,'sketched'),solver='sketch';end
-assert(any(strcmp(solver,{'gmres','sketch'})), ...
-    'solver must be gmres or sketch.');
+if strcmp(solver,'auto')
+    if n<=opts.direct_threshold,solver='backslash';
+    else,solver='gmres';end
+end
+assert(any(strcmp(solver,{'backslash','gmres','sketch'})), ...
+    'solver must be auto, backslash, gmres or sketch.');
 opts.seed=seed;
 [V,kind]=usd_probe_vectors(n,s,opts);
 p=size(V,2);
@@ -54,6 +68,17 @@ samples=zeros(numel(theta),p);
 residuals=zeros(numel(theta),p);
 calls=0;fallbacks=0;
 orders=zeros(p,1);
+if strcmp(solver,'backslash')
+    % Matrix-free assembly once, instead of one factorization per probe.
+    A=complex(zeros(n,n));
+    e=zeros(n,1);
+    for col=1:n
+        e(col)=1;
+        A(:,col)=U(e,'notransp');calls=calls+1;
+        e(col)=0;
+    end
+    I=eye(n);
+end
 if strcmp(solver,'sketch')
     if ~isfield(opts,'sketch_order') || isempty(opts.sketch_order)
         opts.sketch_order=min(n,32);
@@ -80,6 +105,17 @@ if strcmp(solver,'sketch')
 else
     m=0;q=0;
 end
+if strcmp(solver,'backslash')
+    for k=1:numel(theta)
+        z=r*exp(1i*theta(k));
+        shiftedA=A-z*I;
+        Y=shiftedA\full(V);
+        R=shiftedA*Y-full(V);
+        residuals(k,:)=sqrt(sum(abs(R).^2,1))./ ...
+            sqrt(sum(abs(V).^2,1));
+        samples(k,:)=real(1+2*z*sum(conj(full(V)).*Y,1))/(2*pi);
+    end
+else
 for j=1:p
     % Some matrix-free operators require dense RHS (e.g. FFT kernels).
     % Keep basis probes sparse in storage; materialize one column only.
@@ -114,6 +150,7 @@ for j=1:p
         samples(k,j)=real(1+2*z*scalar)/(2*pi);
     end
 end
+end
 rho=mean(samples,2);
 if p>1 && ~strcmp(kind,'basis')
     stderr=std(samples,0,2)/sqrt(p);
@@ -125,7 +162,8 @@ info=struct('matvecs',calls,'probes',p,'radius',r, ...
     'relative_residuals',residuals,'solver_tolerance',tol, ...
     'solver',solver,'probe_type',kind,'standard_error',stderr, ...
     'sketch_order',m,'effective_orders',orders, ...
-    'sketch_dimension',q,'fallback_solves',fallbacks);
+    'sketch_dimension',q,'fallback_solves',fallbacks, ...
+    'direct_threshold',opts.direct_threshold);
 if strcmp(solver,'sketch')
     info.sketch_type=lower(char(opts.sketch_type));
 else
