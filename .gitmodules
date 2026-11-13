@@ -1,0 +1,3 @@
+[submodule "external/anymatrix-unitary"]
+	path = external/anymatrix-unitary
+	url = https://github.com/jaurentz/anymatrix-unitary.git

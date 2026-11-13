@@ -1,0 +1,10 @@
+# Experiment outputs and local MATLAB state
+results/
+figures/
+*.asv
+*.m~
+*.mlx.autosave
+slprj/
+*.slxc
+*.mat
+!.github/

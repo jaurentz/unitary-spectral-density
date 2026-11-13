@@ -1,0 +1,36 @@
+name: MATLAB spectral density regression
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  matlab:
+    runs-on: ubuntu-latest
+    env:
+      MLM_LICENSE_TOKEN: ${{ secrets.MLM_LICENSE_TOKEN }}
+    steps:
+      - name: Require MATLAB batch licensing token for private repository
+        shell: bash
+        run: |
+          if [ -z "$MLM_LICENSE_TOKEN" ]; then
+            echo "::error::Set repository secret MLM_LICENSE_TOKEN for MATLAB CI in this private repository."
+            exit 1
+          fi
+      - name: Check out research code and pinned matrix library
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+      - name: Run all estimator and Dirac driver tests
+        uses: matlab-actions/run-command@v3
+        with:
+          command: setup; results = runtests(fullfile(pwd,'tests')); assertSuccess(results);
