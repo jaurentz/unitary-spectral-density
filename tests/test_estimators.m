@@ -22,6 +22,26 @@ function test_resolvent_exact_diagonal(tc)
 [rho,info]=usd_poisson_density(U,theta,2,r,23,1e-12,12,12);
 verifyLessThan(tc,max(abs(rho-exact)),1e-8);
 verifyGreaterThan(tc,info.matvecs,0);
+verifyEqual(tc,info.solver,'backslash');
+end
+
+function test_resolvent_small_backslash_vs_gmres(tc)
+[U,theta,exact,r]=diagonal_fixture;
+% Both paths use identical seeded stochastic trace probes.
+[direct,di]=usd_poisson_density(U,theta,3,r,31,1e-12,12,12, ...
+    struct('solver','auto','direct_threshold',20));
+[gm,gi]=usd_poisson_density(U,theta,3,r,31,1e-12,12,12, ...
+    struct('solver','gmres'));
+verifyEqual(tc,di.solver,'backslash');
+verifyEqual(tc,gi.solver,'gmres');
+verifyEqual(tc,di.matvecs,12);
+verifyLessThan(tc,max(abs(direct-gm)),1e-9);
+verifyLessThan(tc,max(abs(direct-exact)),1e-9);
+verifyLessThan(tc,di.max_relative_residual,1e-11);
+% Automatic selection must not build dense matrices above the cutoff.
+[~,forcedGM]=usd_poisson_density(U,theta(1:2),1,r,31, ...
+    1e-12,12,12,struct('solver','auto','direct_threshold',4));
+verifyEqual(tc,forcedGM.solver,'gmres');
 end
 
 function test_szego_moment_matching(tc)
