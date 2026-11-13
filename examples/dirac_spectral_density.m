@@ -3,6 +3,7 @@
 %%
 %[text] ## 1. The Dirac operator and its spectrum
 %[text] Anymatrix-unitary supplies both a matrix-vector operator and analytic spectral information. We use its exact finite eigenvalues to plot the Poisson-smoothed density.
+addpath(fileparts(fileparts(which('dirac_spectral_density'))))
 setup
 sites = 48; mass = 0.45; r = 0.8;
 theta = linspace(-pi,pi,121).';
