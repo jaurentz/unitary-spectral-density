@@ -102,9 +102,16 @@ For z=r*exp(i*theta) in the open unit disk,
     rho_r(theta) = Re tr[(U+zI)(U-zI)^(-1)]/(2*pi*n)
                  = Re[1+(2*z/n)*tr((U-zI)^(-1))]/(2*pi).
 
-The default method uses independent isotropic probe vectors and MATLAB
-GMRES for (U-zI)y=v, requiring only the forward Anymatrix operator
-action. Its errors include probe variance and iterative solve error.
+With solver='auto' (the default), small operators of dimension at most
+128 are assembled explicitly by applying the operator to the n canonical
+basis vectors and solved using MATLAB backslash. The assembled matrix
+costs n matvecs and O(n^2) storage. Each shift is refactorized, but
+all stochastic probe right-hand sides are handled together; the resulting
+solve error should be at the usual backward-stable direct-solver level.
+Above this cutoff, the default is MATLAB GMRES, retaining matrix-free
+storage. The cutoff is configurable via direct_threshold. Either method
+can be selected explicitly via solver='backslash' or solver='gmres'.
+Errors include probe variance and, for GMRES, iterative solve error.
 
 The experimental sketch method constructs once per probe a Krylov basis
 Q_m and AQ_m=U*Q_m, then for each z solves the projected random
