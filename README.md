@@ -19,7 +19,7 @@ is a separate reference, not the finite empirical measure.
 |---|---|---|
 | `moments/` | Fourier trace moments and selectable circle smoothing windows | `usd_moment_density` |
 | `quadrature/` | Random-start isometric Arnoldi and unitary Szegő quadrature | `usd_szego_density` |
-| `filters/` | Poisson-resolvent traces via GMRES or sketched Krylov solves | `usd_poisson_density` |
+| `filters/` | Poisson-resolvent traces via small-system backslash, GMRES, or sketched Krylov | `usd_poisson_density` |
 
 Estimators use only `U(X,'notransp')`, `U([],'size')` and MATLAB built-ins.
 They do **not** import Dirac-specific spectral formulas or Anymatrix functions.
@@ -31,7 +31,10 @@ matvec budgets**. Each routine reports its matvec count.
 `quadrature/` matches moments of each random vector spectral measure.
 The **Gauss–Szegő quadrature weights must be retained**; the equal-weight
 eigenvalues of the reduced matrix are not a trace-density estimator.
-`filters/` solves `(U-r*exp(1i*theta)*I)y=v` with GMRES at each angle.
+`filters/` solves `(U-r*exp(1i*theta)*I)y=v`. It defaults to MATLAB
+backslash for small systems (dimension <= 128), assembling the explicit
+matrix from the operator with n matvecs, then solving all probe right-hand
+sides together. Above that dimension, the default is GMRES.
 
 ## Experimental controls
 
@@ -68,8 +71,13 @@ opts = struct('smoothing','jackson','degree',30, ...
 % info.standard_error and info.effective_orders are per-run diagnostics.
 ~~~
 
-**Poisson resolvents:** use classic GMRES (default) or a randomized
-sketch of Krylov projected shifted systems. Gaussian and sparse
+**Poisson resolvents:** the default `solver='auto'` uses backslash for
+small matrices (`direct_threshold=128`) and GMRES for larger systems.
+Select `solver='backslash'`, `solver='gmres'`, or `solver='sketch'`
+explicitly to override the automatic choice. Direct assembly uses n
+matrix-vector products and O(n^2) memory; it is not intended for
+large sparse matrix-free operators. Randomized sketches approximate
+Krylov projected shifted systems. Gaussian and sparse
 CountSketch embeddings are supported. The sketch is independently
 seeded, reused over phase shifts, and checked using TRUE residuals.
 Optional fallback to GMRES is deliberately separate from the
@@ -100,12 +108,18 @@ remains available as a concise alternative.
 
 Open [`examples/dirac_spectral_density.m`](examples/dirac_spectral_density.m)
 in MATLAB's Live Editor or ordinary Editor. It is a **plain-text `.m` file**
-with five `%%` executable sections: Dirac introduction, moment/kernel
+with five native `%%` section breaks and `%[text]` headings: Dirac
+introduction, moment/kernel
 window and stochastic trace sweeps, random-start Gauss–Szegő quadrature,
 GMRES versus Gaussian/CountSketch shifted solves, and a multi-method
-comparison. The example creates **five figure windows** with multiple
+comparison. The `.m` file ends with a `%[appendix]` block so that MATLAB R2025a+
+recognizes it as a **plain-text Live Script** and opens it in the Live Editor.
+The numerical code remains executable by MATLAB R2024b CI.
+The example creates **five figure windows** with multiple
 panels and outputs `windowSummary`, `probeSummary`,
-`quadratureSummary`, `sketchSummary`, and `optionComparison`.
+`quadratureSummary`, `sketchSummary`, and `optionComparison`. Section 3 plots weighted quadrature nodes,
+order-dependent Poisson densities, and convergence diagnostics rather
+than repeating the mathematically identical Jackson moment curves.
 The original `rhoTrue`, `rhoMoments`, `rhoArnoldi`, `rhoKernel`,
 and three-row `comparison` remain available.
 Poisson estimators are compared against the exact **finite Poisson**
