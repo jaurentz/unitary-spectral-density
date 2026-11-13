@@ -44,9 +44,9 @@ From MATLAB R2020b or later (no additional toolboxes):
 ```matlab
 setup;
 out=run_all_dirac(true);       % all three, plots and errors
-a=run_dirac_moments(false);   % individual experiment
-b=run_dirac_quadrature(false);
-c=run_dirac_filters(false);
+a=run_dirac_moments([],false);  % individual experiment
+b=run_dirac_quadrature([],false);
+c=run_dirac_filters([],false);
 results=runtests('tests');
 assertSuccess(results);
 ```
