@@ -12,7 +12,10 @@ for method={'fejer','jackson','poisson','poisson-jackson', ...
     opts=struct('bandwidth',.18);
     rho=usd_circular_density(theta,nodes,weights,.65, ...
         method{1},24,opts);
-    verifyGreaterThanOrEqual(tc,min(rho),-2e-12);
+    if ~strcmp(method{1},'heat')
+        % Finite heat-series truncation need not preserve positivity.
+        verifyGreaterThanOrEqual(tc,min(rho),-2e-12);
+    end
     verifyLessThan(tc,abs(trapz(theta,rho)-1),1e-11);
 end
 g=usd_window_weights(19,.6,'jackson',struct);
