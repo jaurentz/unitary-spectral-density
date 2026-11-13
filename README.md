@@ -32,6 +32,24 @@ The **Gauss–Szegő quadrature weights must be retained**; the equal-weight
 eigenvalues of the reduced matrix are not a trace-density estimator.
 `filters/` solves `(U-r*exp(1i*theta)*I)y=v` with GMRES at each angle.
 
+## Sectioned MATLAB Live Editor example
+
+Open [`examples/dirac_spectral_density.m`](examples/dirac_spectral_density.m)
+in MATLAB's Live Editor or ordinary Editor. It is a **plain-text `.m` file**
+with five `%%` executable sections: Dirac introduction and reference density,
+Fourier moments, Gauss–Szegő/Arnoldi, Poisson-resolvent filtering, and a
+four-curve comparison. Each method has its own plot; the exact reference
+is the **Poisson-smoothed finite trace measure**, not the singular limiting
+density.
+
+Run all five sections in sequence, or run the file as a script. Figures are
+enabled by default. Set `showPlots=false` beforehand for batch execution.
+The example accepts optional `exampleSites`, `exampleGridPoints`,
+`exampleProbes`, `exampleRadius`, `exampleMomentDegree`, and
+`exampleArnoldiOrder` variables.
+
+The CI suite includes a reduced-size smoke test of all five sections.
+
 ## Install and run
 
 ```bash
