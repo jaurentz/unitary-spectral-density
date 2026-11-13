@@ -149,6 +149,18 @@ git add external/anymatrix-unitary
 git commit -m "Update unitary matrix dependency"
 ```
 
+## Continuous integration and parallel development
+
+The MATLAB workflow tests **both** the recorded Anymatrix Git submodule
+commit and a separately resolved latest `anymatrix-unitary/main` commit
+on pushes, PRs, manual runs and a daily schedule. A cross-repository
+dispatch can additionally trigger integration tests whenever upstream
+MATLAB CI passes. After both modes pass, the scheduled/dispatched run
+can propose an updated submodule pin by pull request.
+
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for full details,
+required one-time GitHub permissions, and the local two-clone workflow.
+
 ## GitHub Actions / MATLAB regression
 
 `.github/workflows/matlab-tests.yml` uses MathWorks' `setup-matlab@v3`

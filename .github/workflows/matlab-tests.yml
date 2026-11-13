@@ -1,27 +1,134 @@
 name: MATLAB spectral density regression
+
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: '23 3 * * *'
+  repository_dispatch:
+    types: [anymatrix-main-passed]
 
 permissions:
   contents: read
 
 jobs:
-  matlab:
+  resolve-anymatrix:
+    name: Resolve upstream matrix-library revision
     runs-on: ubuntu-latest
+    outputs:
+      upstream_sha: ${{ steps.revision.outputs.upstream_sha }}
     steps:
-      - name: Check out research code and pinned matrix library
+      - id: revision
+        name: Select passed upstream commit or current main
+        shell: bash
+        env:
+          REQUESTED_SHA: ${{ github.event.client_payload.anymatrix_sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "repository_dispatch" && -n "$REQUESTED_SHA" ]]; then
+            sha="$REQUESTED_SHA"
+          else
+            sha="$(git ls-remote https://github.com/jaurentz/anymatrix-unitary.git refs/heads/main | cut -f1)"
+          fi
+          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Invalid anymatrix-unitary commit SHA."
+            exit 1
+          fi
+          echo "upstream_sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Upstream anymatrix-unitary SHA: $sha" >> "$GITHUB_STEP_SUMMARY"
+
+  matlab:
+    name: MATLAB R2024b / anymatrix-${{ matrix.dependency }}
+    needs: resolve-anymatrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dependency: [pinned, latest]
+    steps:
+      - name: Check out research code and pinned Anymatrix submodule
         uses: actions/checkout@v4
         with:
           submodules: recursive
           persist-credentials: false
+
+      - name: Test passed upstream revision instead of pinned revision
+        if: matrix.dependency == 'latest'
+        shell: bash
+        env:
+          UPSTREAM_SHA: ${{ needs.resolve-anymatrix.outputs.upstream_sha }}
+        run: |
+          set -euo pipefail
+          git -C external/anymatrix-unitary fetch --no-tags origin "$UPSTREAM_SHA"
+          git -C external/anymatrix-unitary checkout --detach "$UPSTREAM_SHA"
+
+      - name: Record both repository revisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "### MATLAB test: anymatrix-${{ matrix.dependency }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Spectral density: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Anymatrix library: $(git -C external/anymatrix-unitary rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
         with:
           release: R2024b
-      - name: Run all estimator and Dirac driver tests
+
+      - name: Run spectral-density and matrix-library integration tests
         uses: matlab-actions/run-command@v3
         with:
           command: setup; results = runtests(fullfile(pwd,'tests')); assertSuccess(results);
+
+  propose-tested-update:
+    name: Propose tested anymatrix submodule update
+    if: (github.event_name == 'schedule' || github.event_name == 'repository_dispatch') && github.ref == 'refs/heads/main'
+    needs: [resolve-anymatrix, matlab]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out repository and existing submodule
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Advance only the submodule to the tested upstream SHA
+        shell: bash
+        env:
+          UPSTREAM_SHA: ${{ needs.resolve-anymatrix.outputs.upstream_sha }}
+        run: |
+          set -euo pipefail
+          git -C external/anymatrix-unitary fetch --no-tags origin "$UPSTREAM_SHA"
+          git -C external/anymatrix-unitary checkout --detach "$UPSTREAM_SHA"
+          echo "Tested anymatrix-unitary revision: $UPSTREAM_SHA" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create or update dependency pull request
+        id: pr
+        uses: peter-evans/create-pull-request@v8
+        continue-on-error: true
+        with:
+          branch: deps/anymatrix-unitary-main
+          delete-branch: true
+          commit-message: "Update tested anymatrix-unitary submodule"
+          title: "Update anymatrix-unitary to tested upstream main"
+          body: |
+            This PR updates the pinned public matrix-library Git submodule.
+
+            The same spectral-density MATLAB regression suite has passed
+            against both the previously pinned dependency and the proposed
+            upstream SHA in the originating GitHub Actions run.
+
+            Tested upstream commit: ${{ needs.resolve-anymatrix.outputs.upstream_sha }}
+            MATLAB test run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            The submodule pin is intentionally not advanced on main until
+            this PR is reviewed and merged.
+
+      - name: Report missing Actions pull-request permission
+        if: steps.pr.outcome == 'failure'
+        run: |
+          echo "::warning::Dependency tests passed but the PR could not be created. Enable 'Allow GitHub Actions to create and approve pull requests' under Settings > Actions > General; confirm the workflow has contents/pull-requests write permission."
