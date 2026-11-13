@@ -17,20 +17,82 @@ is a separate reference, not the finite empirical measure.
 
 | Folder | Estimator | Main routine |
 |---|---|---|
-| `moments/` | Stochastic Fourier traces, truncated Poisson expansion | `usd_moment_density` |
-| `quadrature/` | Isometric Arnoldi and unitary Szegő quadrature | `usd_szego_density` |
-| `filters/` | Direct Poisson-resolvent traces via shifted GMRES solves | `usd_poisson_density` |
+| `moments/` | Fourier trace moments and selectable circle smoothing windows | `usd_moment_density` |
+| `quadrature/` | Random-start isometric Arnoldi and unitary Szegő quadrature | `usd_szego_density` |
+| `filters/` | Poisson-resolvent traces via GMRES or sketched Krylov solves | `usd_poisson_density` |
 
 Estimators use only `U(X,'notransp')`, `U([],'size')` and MATLAB built-ins.
 They do **not** import Dirac-specific spectral formulas or Anymatrix functions.
-All three use independent seeded four-phase random vectors and a common
-Poisson radius `0<r<1`. This gives comparable smoothing but **not equal
+All three default to seeded four-phase trace probes; randomized probe
+distributions and canonical-basis references are now configurable.
+A common Poisson radius gives comparable smoothing but **not equal
 matvec budgets**. Each routine reports its matvec count.
 
 `quadrature/` matches moments of each random vector spectral measure.
 The **Gauss–Szegő quadrature weights must be retained**; the equal-weight
 eigenvalues of the reduced matrix are not a trace-density estimator.
 `filters/` solves `(U-r*exp(1i*theta)*I)y=v` with GMRES at each angle.
+
+## Experimental controls
+
+All functions retain their original positional arguments; pass a MATLAB
+options struct as the final argument. Consult
+[mathematics.md](mathematics.md) for equations, error sources, literature
+references, and distinctions between established unitary methods and
+experimental Hermitian-to-unitary adaptations.
+
+**Moment smoothing:** choose Poisson (default), Fejer, Jackson,
+Dirichlet, Lanczos sigma, heat/wrapped Gaussian, or explicit
+Poisson-Fejer / Poisson-Jackson compositions. Jackson uses the
+*circle squared-Fejer kernel*, not the real-line Chebyshev KPM damping
+coefficients. Non-Poisson windows ignore the positional radius r.
+
+~~~matlab
+opts = struct('smoothing','jackson', ...
+              'trace_mode','stochastic','probe_type','fourphase');
+[rho,info] = usd_moment_density(U,theta,40,20,.8,17,opts);
+
+opts.trace_mode = 'exact';  % complete canonical basis, n*K matvecs
+[rhoExact,exactInfo] = usd_moment_density(U,theta,40,1,.8,17,opts);
+~~~
+
+**Arnoldi / Gauss-Szego:** repeatedly sample independent starting
+vectors, form nonuniform-weight quadrature measures, and average.
+Select the same finite smoothing kernel and degree as moments
+(with degree <= order-1) for a mathematically matched experiment.
+
+~~~matlab
+opts = struct('smoothing','jackson','degree',30, ...
+              'probe_type','complex_gaussian');
+[rho,info] = usd_szego_density(U,theta,31,20,.8,17,opts);
+% info.standard_error and info.effective_orders are per-run diagnostics.
+~~~
+
+**Poisson resolvents:** use classic GMRES (default) or a randomized
+sketch of Krylov projected shifted systems. Gaussian and sparse
+CountSketch embeddings are supported. The sketch is independently
+seeded, reused over phase shifts, and checked using TRUE residuals.
+Optional fallback to GMRES is deliberately separate from the
+projected method, so approximate-sketch experiments remain possible.
+
+~~~matlab
+opts = struct('solver','sketch','sketch_order',40, ...
+              'sketch_dimension',120,'sketch_type','countsketch', ...
+              'sketch_fallback',true, ...
+              'sketch_residual_tolerance',1e-5);
+[rho,info] = usd_poisson_density(U,theta,8,.8,17,1e-9,40,[],opts);
+disp([info.matvecs,info.max_relative_residual,info.fallback_solves]);
+~~~
+
+Available trace-probe choices are fourphase (default), rademacher,
+complex_gaussian, and basis; a custom n-by-s matrix can be passed
+using opts.probe_vectors. Random vectors are normalized and isotropic.
+A complete basis gives an exact trace, while arbitrary custom starts
+are not necessarily unbiased.
+
+See [examples/experimental_options.m](examples/experimental_options.m)
+for a plain-text comparative script with error diagnostics. The existing
+five-section Dirac Live Editor script remains backward compatible.
 
 ## Sectioned MATLAB Live Editor example
 
@@ -101,11 +163,13 @@ Source: https://github.com/matlab-actions/setup-matlab
 
 ## Limitations
 
-The initial quadrature prototype uses twice-reorthogonalized Arnoldi
-and a dense order-`m` unitary closure; it is not yet a specialized
-short-recurrence isometric Arnoldi implementation. The direct-filter
-method can require many shifted GMRES iterations as `r` approaches one.
-Moment truncation can produce a slightly negative reconstruction even
-though the untruncated Poisson density is positive.
+The quadrature prototype uses twice-reorthogonalized Arnoldi and dense
+unitary closure, not a specialized short-recurrence isometric Arnoldi
+algorithm. The sketched solver also builds and stores a full Krylov
+basis; it is not a low-memory or optimized sketched GMRES implementation.
+For a general unitary spectrum, forward Krylov spaces may approximate
+interior-disk resolvents poorly. Check actual residuals and enable
+fallback when appropriate. Truncated Poisson and heat reconstructions
+can be slightly negative even though their untruncated kernels are positive.
 
 MATLAB tests are configured; inspect the latest Actions run for results.
