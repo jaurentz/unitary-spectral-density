@@ -98,48 +98,46 @@ using opts.probe_vectors. Random vectors are normalized and isotropic.
 A complete basis gives an exact trace, while arbitrary custom starts
 are not necessarily unbiased.
 
-The primary [Dirac Live Editor script](examples/dirac_spectral_density.m)
-demonstrates **every implemented smoothing label, trace/probe mode,
-Arnoldi starting-vector type, and projected-solver configuration**.
-The smaller [experimental_options.m](examples/experimental_options.m)
-remains available as a concise alternative.
+The main [Dirac example](examples/dirac_spectral_density.m) is deliberately
+short. The complete option sweeps are kept in
+[dirac_options_gallery.m](examples/dirac_options_gallery.m) and
+[experimental_options.m](examples/experimental_options.m).
 
-## Sectioned MATLAB Live Editor example
+## Dirac example: five short sections
 
-Open [`examples/dirac_spectral_density.m`](examples/dirac_spectral_density.m)
-in MATLAB's Live Editor or ordinary Editor. It is a **plain-text `.m` file**
-with five native `%%` section breaks and `%[text]` headings: Dirac
-introduction, moment/kernel
-window and stochastic trace sweeps, random-start Gauss–Szegő quadrature,
-GMRES versus Gaussian/CountSketch shifted solves, and a multi-method
-comparison. The `.m` file ends with a `%[appendix]` block so that MATLAB R2025a+
-recognizes it as a **plain-text Live Script** and opens it in the Live Editor.
-The numerical code remains executable by MATLAB R2024b CI.
-The example creates **five figure windows** with multiple
-panels and outputs `windowSummary`, `probeSummary`,
-`quadratureSummary`, `sketchSummary`, and `optionComparison`. Section 3 plots weighted quadrature nodes,
-order-dependent Poisson densities, and convergence diagnostics rather
-than repeating the mathematically identical Jackson moment curves.
-The original `rhoTrue`, `rhoMoments`, `rhoArnoldi`, `rhoKernel`,
-and three-row `comparison` remain available.
-Poisson estimators are compared against the exact **finite Poisson**
-convolution; other windows are compared against matching **finite
-window-specific** references, not the singular limiting density.
+The plain-text MATLAB Live Script provides a Chebfun-style worked example:
 
-Run all five sections in sequence, or run the file as a script. Figures are
-enabled by default. Set `showPlots=false` beforehand for batch execution.
-The example accepts optional `exampleSites`, `exampleGridPoints`,
-`exampleProbes`, `exampleRadius`, `exampleMomentDegree`,
-`exampleArnoldiOrder`, `exampleStudyDegree`, `exampleStudyProbes`,
-`exampleSketchOrder`, `exampleSketchDimension`,
-`exampleKernelStudyGridPoints`, and `exampleHeatBandwidth` variables.
-The primary Poisson runs use the full settings; the comprehensive option
-sweeps use smaller matched Fourier/Arnoldi degrees and a coarser sketch
-angle grid to keep interactive experiments practical.
+1. Construct the matrix-free Dirac operator and obtain its analytic
+   spectral descriptor directly from the pinned Anymatrix-unitary generator.
+2. Plot the exact finite Poisson-smoothed eigenphase density.
+3. Call the Fourier-moment, random-start Szego, and Poisson-resolvent
+   estimators, plotting each returned density immediately.
+4. Plot the three estimates together and display an error table.
 
-The CI suite includes reduced-size tests of **all five sections**, all
-window/trace/quadrature/sketch choices, and the five-figure layout.
+The example calls the same generator twice: once with 'operator' to obtain
+the matrix-vector action, and once with 'spectral' to obtain exact finite
+eigenvalues. No Dirac-specific dispersion formula is repeated in the
+density-estimator repository. The benchmark helper now uses the same
+Anymatrix spectral descriptor.
 
+From the repository root in MATLAB:
+
+~~~matlab
+setup
+edit examples/dirac_spectral_density.m
+~~~
+
+MATLAB R2025a or newer renders the script as formatted plain-text live
+code. R2024b can execute it as an ordinary script in CI.
+
+**Missing helper after an update?** If MATLAB reports that
+'usd_probe_vectors' is undefined, run 'git pull', then
+'git submodule update --init --recursive', then rerun 'setup' from the
+repository root. Check the active file with 'which usd_probe_vectors -all'.
+
+Three output arrays (rhoMoments, rhoArnoldi, rhoKernel) share the same
+phase grid and finite Poisson reference (rhoTrue). The final comparison
+table contains integrated absolute errors and operator matvec counts.
 ## Install and run
 
 ```bash
