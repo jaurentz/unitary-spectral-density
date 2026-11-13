@@ -27,6 +27,27 @@ verifyTrue(tc,all(isfinite([rhoTrue rhoMoments rhoArnoldi rhoKernel]),'all'));
 verifyGreaterThan(tc,min([momentsInfo.matvecs, ...
     arnoldiInfo.matvecs,kernelInfo.matvecs]),0);
 verifyLessThan(tc,max(comparison.L1Error),.7);
+
+% Every implemented window, trace mode, Arnoldi start, and sketch option
+% must be exercised in the same plain-text five-section example.
+verifyEqual(tc,numel(windowNames),10);
+verifyEqual(tc,numel(probeChoices),6);
+verifyEqual(tc,numel(startChoices),5);
+verifyEqual(tc,numel(sketchNames),4);
+verifyEqual(tc,height(optionComparison),26);
+verifyEqual(tc,height(windowSummary),10);
+verifyEqual(tc,height(probeSummary),6);
+verifyEqual(tc,height(quadratureSummary),5);
+verifyEqual(tc,height(sketchSummary),4);
+verifyTrue(tc,all(isfinite(optionComparison.OptionL1)));
+verifyGreaterThanOrEqual(tc,min(windowMatvecs),1);
+verifyGreaterThan(tc,probeInfo{end}.matvecs, ...
+    probeInfo{1}.matvecs);
+verifyLessThan(tc,momentQuadratureDiscrepancy,2e-8);
+verifyEqual(tc,sketchInfo{1}.solver,'sketch');
+verifyEqual(tc,sketchInfo{2}.sketch_type,'countsketch');
+verifyGreaterThanOrEqual(tc,sketchInfo{4}.fallback_solves,0);
+verifyEqual(tc,numel(kernelReference),numel(kernelTheta));
 end
 
 function test_all_five_figures(tc)
@@ -49,6 +70,7 @@ run(script);
 figures = findall(groot,'Type','figure');
 verifyEqual(tc,numel(figures),5);
 verifyTrue(tc,all(isfinite([rhoTrue rhoMoments rhoArnoldi rhoKernel]),'all'));
+verifyEqual(tc,height(optionComparison),26);
 end
 
 function restore_visibility(value)
