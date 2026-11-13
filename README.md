@@ -1,4 +1,4 @@
-# Unitary Spectral Density (private research repository)
+# Unitary Spectral Density
 
 Portable MATLAB experiments for approximating the **normalized empirical
 eigenphase measure** of a unitary matrix from matrix-vector products.
@@ -69,17 +69,15 @@ git add external/anymatrix-unitary
 git commit -m "Update unitary matrix dependency"
 ```
 
-## GitHub Actions and MATLAB licensing
+## GitHub Actions / MATLAB regression
 
 `.github/workflows/matlab-tests.yml` uses MathWorks' `setup-matlab@v3`
 and `run-command@v3`, checking out the pinned submodule and running
 the full estimator suite on push, pull request, and manual dispatch.
 
-**MATLAB Actions do not automatically license MATLAB for a private repository.**
-Create the GitHub Actions repository secret `MLM_LICENSE_TOKEN`, containing
-a valid MATLAB batch licensing token, before expecting the workflow to pass.
-The workflow deliberately fails with a clear message when the secret is absent.
-An appropriately licensed self-hosted runner is an alternative.
+The repository is public, so MATLAB Actions can run on GitHub-hosted runners
+without an additional MATLAB licensing token. The CI workflow runs on each
+push to `main`, on pull requests, and by manual dispatch.
 
 Source: https://github.com/matlab-actions/setup-matlab
 
@@ -92,5 +90,4 @@ method can require many shifted GMRES iterations as `r` approaches one.
 Moment truncation can produce a slightly negative reconstruction even
 though the untruncated Poisson density is positive.
 
-MATLAB tests are configured but not claimed to have passed until a
-licensed CI run has completed.
+MATLAB tests are configured; inspect the latest Actions run for results.
