@@ -19,7 +19,7 @@ end
 
 function test_resolvent_exact_diagonal(tc)
 [U,theta,exact,r]=diagonal_fixture;
-[rho,info]=usd_poisson_density(U,theta,2,r,23,1e-12,12,3);
+[rho,info]=usd_poisson_density(U,theta,2,r,23,1e-12,12,12);
 verifyLessThan(tc,max(abs(rho-exact)),1e-8);
 verifyGreaterThan(tc,info.matvecs,0);
 end

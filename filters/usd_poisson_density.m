@@ -4,6 +4,8 @@ function [rho,info]=usd_poisson_density(U,theta,s,r,seed,tol,restart,maxit)
 %   Uses only U(X,'notransp') through GMRES shifted solves, not
 %   Fourier moments, quadrature, a matrix class, or an explicit U.
 %   Small r is smoother; r close to one requires harder shifted solves.
+%   When RESTART >= n, MATLAB interprets MAXIT as total iterations,
+%   not as a number of restart cycles.
 if nargin<5,seed=17;end
 if nargin<6,tol=1e-9;end
 sz=U([],'size');n=sz(1);
@@ -11,7 +13,15 @@ assert(numel(sz)==2 && sz(2)==n,'U must be square.');
 validateattributes(s,{'numeric'},{'scalar','integer','positive'});
 assert(isscalar(r) && r>0 && r<1,'Require 0<r<1.');
 if nargin<7 || isempty(restart),restart=min(40,n);end
-if nargin<8 || isempty(maxit),maxit=ceil(n/restart)+5;end
+if nargin<8 || isempty(maxit)
+    % MATLAB gmres counts MAXIT as *total* iterations for unrestarted
+    % GMRES (restart == n), but as restart cycles otherwise.
+    if restart>=n
+        maxit=n;
+    else
+        maxit=ceil(n/restart)+5;
+    end
+end
 state=rng;restore=onCleanup(@()rng(state)); %#ok<NASGU>
 rng(seed,'twister');
 probes=zeros(n,s);
