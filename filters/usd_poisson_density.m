@@ -81,7 +81,9 @@ else
     m=0;q=0;
 end
 for j=1:p
-    v=V(:,j);
+    % Some matrix-free operators require dense RHS (e.g. FFT kernels).
+    % Keep basis probes sparse in storage; materialize one column only.
+    v=full(V(:,j));
     if strcmp(solver,'sketch')
         [Q,AQ]=krylov_data(v,m);
         orders(j)=size(Q,2);

@@ -43,7 +43,9 @@ opts.seed=seed;
 p=size(V,2);
 moments=zeros(K,p);
 for j=1:p
-    v=V(:,j);
+    % Some matrix-free operators require dense RHS (e.g. FFT kernels).
+    % Keep basis probes sparse in storage; materialize one column only.
+    v=full(V(:,j));
     x=v;
     for k=1:K
         x=U(x,'notransp');
