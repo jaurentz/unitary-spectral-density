@@ -42,7 +42,8 @@ jobs:
   matlab:
     name: MATLAB R2024b / anymatrix-${{ matrix.dependency }}
     needs: resolve-anymatrix
-    runs-on: ubuntu-latest
+    # MATLAB R2024b dependencies are not installable on Ubuntu 26.04.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
