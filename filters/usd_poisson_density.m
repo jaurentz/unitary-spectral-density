@@ -64,40 +64,6 @@ opts.seed=seed;
 [V,kind]=usd_probe_vectors(n,s,opts);
 p=size(V,2);
 theta=theta(:);
-if strcmp(solver,'backslash')
-    % The explicit matrix is assembled from the matrix-free operator.
-    % Backslash solves all trace-probe right-hand sides per shift,
-    % avoiding Krylov convergence tolerances on small problems.
-    A=complex(zeros(n,n));
-    E=speye(n);
-    for t=1:n
-        A(:,t)=U(E(:,t),'notransp');
-    end
-    samples=zeros(numel(theta),p);
-    residuals=zeros(numel(theta),p);
-    for k=1:numel(theta)
-        z=r*exp(1i*theta(k));
-        T=A-z*eye(n);
-        Y=T\V;
-        res=T*Y-V;
-        residuals(k,:)=sqrt(sum(abs(res).^2,1));
-        samples(k,:)=real(1+2*z*sum(conj(V).*Y,1))/(2*pi);
-    end
-    rho=mean(samples,2);
-    if p>1 && ~strcmp(kind,'basis')
-        stderr=std(samples,0,2)/sqrt(p);
-    else
-        stderr=zeros(size(rho));
-    end
-    info=struct('matvecs',n,'probes',p,'radius',r, ...
-        'max_relative_residual',max(residuals(:)), ...
-        'relative_residuals',residuals,'solver_tolerance',tol, ...
-        'solver','backslash','probe_type',kind, ...
-        'standard_error',stderr,'sketch_order',0, ...
-        'effective_orders',zeros(p,1),'sketch_dimension',0, ...
-        'fallback_solves',0,'sketch_type','none');
-    return
-end
 samples=zeros(numel(theta),p);
 residuals=zeros(numel(theta),p);
 calls=0;fallbacks=0;
