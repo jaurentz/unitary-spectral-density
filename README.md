@@ -90,27 +90,41 @@ using opts.probe_vectors. Random vectors are normalized and isotropic.
 A complete basis gives an exact trace, while arbitrary custom starts
 are not necessarily unbiased.
 
-See [examples/experimental_options.m](examples/experimental_options.m)
-for a plain-text comparative script with error diagnostics. The existing
-five-section Dirac Live Editor script remains backward compatible.
+The primary [Dirac Live Editor script](examples/dirac_spectral_density.m)
+demonstrates **every implemented smoothing label, trace/probe mode,
+Arnoldi starting-vector type, and projected-solver configuration**.
+The smaller [experimental_options.m](examples/experimental_options.m)
+remains available as a concise alternative.
 
 ## Sectioned MATLAB Live Editor example
 
 Open [`examples/dirac_spectral_density.m`](examples/dirac_spectral_density.m)
 in MATLAB's Live Editor or ordinary Editor. It is a **plain-text `.m` file**
-with five `%%` executable sections: Dirac introduction and reference density,
-Fourier moments, Gauss–Szegő/Arnoldi, Poisson-resolvent filtering, and a
-four-curve comparison. Each method has its own plot; the exact reference
-is the **Poisson-smoothed finite trace measure**, not the singular limiting
-density.
+with five `%%` executable sections: Dirac introduction, moment/kernel
+window and stochastic trace sweeps, random-start Gauss–Szegő quadrature,
+GMRES versus Gaussian/CountSketch shifted solves, and a multi-method
+comparison. The example creates **five figure windows** with multiple
+panels and outputs `windowSummary`, `probeSummary`,
+`quadratureSummary`, `sketchSummary`, and `optionComparison`.
+The original `rhoTrue`, `rhoMoments`, `rhoArnoldi`, `rhoKernel`,
+and three-row `comparison` remain available.
+Poisson estimators are compared against the exact **finite Poisson**
+convolution; other windows are compared against matching **finite
+window-specific** references, not the singular limiting density.
 
 Run all five sections in sequence, or run the file as a script. Figures are
 enabled by default. Set `showPlots=false` beforehand for batch execution.
 The example accepts optional `exampleSites`, `exampleGridPoints`,
-`exampleProbes`, `exampleRadius`, `exampleMomentDegree`, and
-`exampleArnoldiOrder` variables.
+`exampleProbes`, `exampleRadius`, `exampleMomentDegree`,
+`exampleArnoldiOrder`, `exampleStudyDegree`, `exampleStudyProbes`,
+`exampleSketchOrder`, `exampleSketchDimension`,
+`exampleKernelStudyGridPoints`, and `exampleHeatBandwidth` variables.
+The primary Poisson runs use the full settings; the comprehensive option
+sweeps use smaller matched Fourier/Arnoldi degrees and a coarser sketch
+angle grid to keep interactive experiments practical.
 
-The CI suite includes a reduced-size smoke test of all five sections.
+The CI suite includes reduced-size tests of **all five sections**, all
+window/trace/quadrature/sketch choices, and the five-figure layout.
 
 ## Install and run
 
