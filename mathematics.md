@@ -210,6 +210,22 @@ accounting for moment and quadrature truncation.
   https://doi.org/10.1145/1944345.1944349
   (PSD-specific error bounds do not directly apply to unitary U.)
 
+- F. Matti, H. He, D. Kressner and H. Y. Lam, *Stochastic Trace
+  Estimation for Parameter-Dependent Matrices Applied to Spectral Density
+  Approximation*, SIAM J. Sci. Comput. 48 (2026), A2287-A2313.
+  https://doi.org/10.1137/25M1737857
+  Reproducible code: https://github.com/FMatti/parameter-trace
+  **Relevance:** Extends Girard-Hutchinson, Nystrom and Nystrom++ trace
+  estimation to continuously parameter-dependent matrices by reusing the
+  same random probes at all parameter values and applying Chebyshev
+  approximation in the parameter. Particularly relevant to estimating
+  smoothed densities on many spectral grid points at reduced cost.
+  **Scope:** The paper treats symmetric/Hermitian-type real-line spectral
+  density problems; it does not directly provide a unit-circle estimator
+  or a structure-preserving compression of a unitary matrix. A periodic
+  phase-domain adaptation (e.g., to Poisson-smoothed unitary densities)
+  would require separate analysis.
+
 ### Projected systems and spectral filters
 
 - Y. Nakatsukasa and J. A. Tropp, *Fast and Accurate Randomized
