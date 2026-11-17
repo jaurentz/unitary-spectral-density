@@ -163,6 +163,18 @@ accounting for moment and quadrature truncation.
 
 ### Unit circle / unitary methods
 
+- L. Pawela and Z. Puchala, *IntegrateUnitary.jl: A Julia Package
+  for Symbolic Integration over Haar Measures* (2026), arXiv:2605.23830.
+  https://arxiv.org/abs/2605.23830
+  **Relevance:** Provides exact Haar expectations of entry-wise and trace
+  polynomials for unitary, orthogonal and symplectic groups using
+  Weingarten calculus, with symbolic dimension dependence in many cases.
+  Potentially useful for deriving ensemble moments and validating
+  expectations or variances of randomized unitary spectral-moment
+  estimators, and for generating analytic benchmarks.
+  **Scope:** A symbolic Haar integration toolkit, not a matrix-free
+  spectral-density estimator and not a unitary compression method.
+
 - W. Kirby, Y. Shen, D. Camps, A. Chowdhury, K. Klymko and
   R. Van Beeumen, *Quantum Krylov Algorithm for Szego Quadrature*
   (2025), arXiv:2509.19195.
