@@ -163,6 +163,27 @@ accounting for moment and quadrature truncation.
 
 ### Unit circle / unitary methods
 
+- W. Kirby, Y. Shen, D. Camps, A. Chowdhury, K. Klymko and
+  R. Van Beeumen, *Quantum Krylov Algorithm for Szego Quadrature*
+  (2025), arXiv:2509.19195.
+  https://arxiv.org/abs/2509.19195
+  **Relevance:** Constructs Szego quadrature nodes and weights using
+  quantum-circuit measurements for a unitary operator U; the resulting
+  quadrature functional can approximate <psi1|f(U)|psi0> for functions f,
+  with optimal circuit counts for Laurent-polynomial f. The unitary
+  quadrature viewpoint overlaps strongly with isometric Arnoldi and
+  Gauss-Szego methods in this project. The quantum measurement setting
+  differs from our classical matrix-free and randomized trace setup.
+- M. Fasi and L. Robol, *Sampling the Eigenvalues of Random
+  Orthogonal and Unitary Matrices*, Linear Algebra Appl. 620 (2021),
+  297-321. https://doi.org/10.1016/j.laa.2021.02.031
+  Preprint: https://arxiv.org/abs/2009.11515
+  **Relevance:** Uses factored unitary Hessenberg matrices and a tailored
+  core-chasing eigensolver to sample Haar-unitary/orthogonal eigenvalues
+  in O(n^2) arithmetic. A useful source of structured random-unitary
+  test matrices and reference eigenphases; it is not itself an estimator
+  of the density of a given matrix from matrix-vector products.
+
 - W. B. Gragg, *Positive Definite Toeplitz Matrices, the Arnoldi Process
   for Isometric Operators, and Gaussian Quadrature on the Unit Circle*,
   J. Comput. Appl. Math. 46 (1993), 183-198.
